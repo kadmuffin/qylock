@@ -38,30 +38,31 @@ let
     sha256 = "1lsvdk4jp6c6b2rjzvlbpzn1fwmk8hjm10ciqfwlsqcbqifz9hqg";
   };
 
-  copyFonts = dst: ''
-    mkdir -p ${dst}/terraria/font
-    cp ${patrickHand} ${dst}/terraria/font/PatrickHand-Regular.ttf
+  # Helper to install fonts into a theme directory
+  installThemeFonts = themeDir: ''
+    mkdir -p ${themeDir}/terraria/font
+    cp ${patrickHand} ${themeDir}/terraria/font/PatrickHand-Regular.ttf
 
-    mkdir -p ${dst}/nier-automata/font
-    cp ${twoWeekendGoSemibold} ${dst}/nier-automata/font/twoweekendgo-semibold.otf
+    mkdir -p ${themeDir}/nier-automata/font
+    cp ${twoWeekendGoSemibold} ${themeDir}/nier-automata/font/twoweekendgo-semibold.otf
 
-    mkdir -p ${dst}/Genshin/font
-    cp ${notoSansSC} ${dst}/Genshin/font/NotoSansSC-wght.ttf
+    mkdir -p ${themeDir}/Genshin/font
+    cp ${notoSansSC} ${themeDir}/Genshin/font/NotoSansSC-wght.ttf
 
-    mkdir -p ${dst}/sword/font
-    cp ${shojumaru} ${dst}/sword/font/Shojumaru-Regular.ttf
+    mkdir -p ${themeDir}/sword/font
+    cp ${shojumaru} ${themeDir}/sword/font/Shojumaru-Regular.ttf
 
-    mkdir -p ${dst}/minecraft/font
-    cp ${minecraftFont} ${dst}/minecraft/font/Minecraft.ttf
+    mkdir -p ${themeDir}/minecraft/font
+    cp ${minecraftFont} ${themeDir}/minecraft/font/Minecraft.ttf
 
-    mkdir -p ${dst}/star-rail/font
-    cp ${barlow} ${dst}/star-rail/font/Barlow-SemiBold.ttf
+    mkdir -p ${themeDir}/star-rail/font
+    cp ${barlow} ${themeDir}/star-rail/font/Barlow-SemiBold.ttf
 
-    mkdir -p ${dst}/osu/font
-    cp ${comfortaa} ${dst}/osu/font/Comfortaa-wght.ttf
+    mkdir -p ${themeDir}/osu/font
+    cp ${comfortaa} ${themeDir}/osu/font/Comfortaa-wght.ttf
 
-    mkdir -p ${dst}/osumania/font
-    cp ${comfortaa} ${dst}/osumania/font/Comfortaa-wght.ttf
+    mkdir -p ${themeDir}/osumania/font
+    cp ${comfortaa} ${themeDir}/osumania/font/Comfortaa-wght.ttf
   '';
 in
 {
@@ -76,7 +77,7 @@ in
       cp -r themes/* $out/share/sddm/themes/
 
       # Install font fallbacks
-      ${copyFonts "$out/share/sddm/themes"}
+      ${installThemeFonts "$out/share/sddm/themes"}
     '';
   };
 
@@ -98,7 +99,42 @@ in
       cp -r themes-qt5/* $out/share/sddm/themes/
 
       # Install font fallbacks
-      ${copyFonts "$out/share/sddm/themes"}
+      ${installThemeFonts "$out/share/sddm/themes"}
+    '';
+  };
+
+  qylock-lockscreen = pkgs.stdenv.mkDerivation rec {
+    pname = "qylock-lockscreen";
+    version = "1.0.0";
+
+    src = ./.;
+
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    
+    buildInputs = [
+      pkgs.quickshell
+      pkgs.qt6.qtwayland
+      pkgs.qt6.qtmultimedia
+      pkgs.qt6.qtsvg
+      pkgs.qt6.qt5compat
+    ];
+
+    installPhase = ''
+      mkdir -p $out/share/qylock-lockscreen
+      cp -r quickshell-lockscreen/* $out/share/qylock-lockscreen/
+      
+      mkdir -p $out/share/qylock-lockscreen/themes
+      cp -r themes/* $out/share/qylock-lockscreen/themes/
+      
+      # Install font fallbacks into lockscreen themes
+      ${installThemeFonts "$out/share/qylock-lockscreen/themes"}
+
+      mkdir -p $out/bin
+      makeWrapper ${pkgs.quickshell}/bin/quickshell $out/bin/qylock-lock \
+        --add-flags "-p $out/share/qylock-lockscreen/lock_shell.qml" \
+        --set QML2_IMPORT_PATH "$out/share/qylock-lockscreen/imports" \
+        --set QML_XHR_ALLOW_FILE_READ "1" \
+        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.procps pkgs.util-linux pkgs.systemd ]}
     '';
   };
 }

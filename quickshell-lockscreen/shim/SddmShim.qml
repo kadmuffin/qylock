@@ -7,6 +7,7 @@ Item {
     id: shim
 
     property string themePath: ""
+    property string pamService: "login"
     property var config: ({})
     property bool configReady: false
 
@@ -175,6 +176,7 @@ Item {
 
     PamContext {
         id: pam
+        service: shim.pamService
         property string pendingPassword: ""
 
         onResponseRequiredChanged: {

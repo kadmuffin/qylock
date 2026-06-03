@@ -23,6 +23,7 @@ ShellRoot {
     SddmShim {
         id: sddmShim
         themePath: shellRoot.themePath
+        pamService: "qylock-lock"
     }
 
     Connections {

@@ -126,6 +126,57 @@ Point your Window Manager keybind (e.g., in Hyprland, Qtile, Sway, or i3) direct
 
 <p align="center">━━━━━━━ ◈ ━━━━━━━</p>
 
+<a id="nixos-setup"></a>
+<br>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/-NIXOS%20SETUP-5277C3?style=for-the-badge&labelColor=1a1b26&logo=nixos&logoColor=white" height="60" />
+</p>
+
+<br>
+
+#### ❄️ USING THE FLAKE
+
+Add `qylock` to your flake inputs:
+
+```nix
+inputs.qylock.url = "github:kadmuffin/qylock";
+```
+
+Then add the module to your NixOS configuration:
+
+```nix
+{ inputs, ... }: {
+  imports = [ inputs.qylock.nixosModules.default ];
+
+  services.qylock = {
+    sddm = {
+      enable = true;
+      theme = "nier-automata";
+    };
+    lockscreen = {
+      enable = true;
+      theme = "nier-automata";
+    };
+  };
+}
+```
+
+#### ⌨️ NIRI INTEGRATION
+
+For Niri (and other Wayland compositors), you can bind the lock command in your configuration:
+
+```ron
+// niri config
+binds {
+    Mod+L { spawn "qylock-lock"; }
+}
+```
+
+The `qylock-lock` command is automatically added to your PATH when `services.qylock.lockscreen.enable = true`. It uses `ext-session-lock-v1` to securely lock your session.
+
+<p align="center">━━━━━━━ ◈ ━━━━━━━</p>
+
 <a id="faq"></a>
 <br>
 

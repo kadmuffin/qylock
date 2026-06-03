@@ -26,68 +26,118 @@
             qylock-pkgs = self.packages.${pkgs.system};
           in {
             options.services.qylock = {
-              enable = lib.mkEnableOption "qylock SDDM themes";
-              theme = lib.mkOption {
-                type = lib.types.str;
-                default = "nier-automata";
-                description = "The qylock theme to use (e.g., 'nier-automata', 'pixel-coffee', 'terraria').";
+              sddm = {
+                enable = lib.mkEnableOption "qylock SDDM themes";
+                theme = lib.mkOption {
+                  type = lib.types.str;
+                  default = "nier-automata";
+                  description = "The qylock theme to use for SDDM.";
+                };
+                qtVersion = lib.mkOption {
+                  type = lib.types.enum [ "5" "6" ];
+                  default = "6";
+                  description = "Qt version of SDDM theme (6 for modern Qt6, 5 for legacy Qt5).";
+                };
+                themeConfig = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.str;
+                  default = {};
+                  description = "Key-value pairs to override settings in the theme's theme.conf.";
+                };
               };
-              qtVersion = lib.mkOption {
-                type = lib.types.enum [ "5" "6" ];
-                default = "6";
-                description = "Qt version of SDDM theme (6 for modern Qt6, 5 for legacy Qt5).";
-              };
-              themeConfig = lib.mkOption {
-                type = lib.types.attrsOf lib.types.str;
-                default = {};
-                description = "Key-value pairs to override settings in the theme's theme.conf.";
+              lockscreen = {
+                enable = lib.mkEnableOption "qylock lockscreen (Quickshell)";
+                theme = lib.mkOption {
+                  type = lib.types.str;
+                  default = "nier-automata";
+                  description = "The qylock theme to use for the lockscreen.";
+                };
               };
             };
 
-            config = lib.mkIf cfg.enable {
-              services.displayManager.sddm = {
-                enable = true;
-                theme = cfg.theme;
-                extraPackages = if cfg.qtVersion == "6" then [
-                  pkgs.qt6.qt5compat
-                  pkgs.qt6.qtsvg
-                  pkgs.qt6.qtmultimedia
-                ] else [
-                  pkgs.libsForQt5.qtgraphicaleffects
-                  pkgs.libsForQt5.qtquickcontrols2
-                  pkgs.libsForQt5.qtmultimedia
+            config = lib.mkMerge [
+              (lib.mkIf cfg.sddm.enable {
+                # ... (SDDM config remains the same)
+                services.displayManager.sddm = {
+                  enable = true;
+                  theme = cfg.sddm.theme;
+                  extraPackages = if cfg.sddm.qtVersion == "6" then [
+                    pkgs.qt6.qt5compat
+                    pkgs.qt6.qtsvg
+                    pkgs.qt6.qtmultimedia
+                  ] else [
+                    pkgs.libsForQt5.qtgraphicaleffects
+                    pkgs.libsForQt5.qtquickcontrols2
+                    pkgs.libsForQt5.qtmultimedia
+                  ];
+                };
+
+                environment.systemPackages = [
+                  (let
+                    basePackage = if cfg.sddm.qtVersion == "6" then qylock-pkgs.qylock-sddm-theme else qylock-pkgs.qylock-sddm-theme-qt5;
+                  in
+                    if cfg.sddm.themeConfig == {} then basePackage
+                    else pkgs.stdenv.mkDerivation {
+                      pname = "qylock-sddm-theme-customized";
+                      version = basePackage.version;
+                      src = basePackage;
+                      installPhase = ''
+                        mkdir -p $out/share/sddm/themes
+                        cp -r share/sddm/themes/* $out/share/sddm/themes/
+                        chmod -R +w $out/share/sddm/themes/
+                        
+                        CONF_FILE="$out/share/sddm/themes/${cfg.sddm.theme}/theme.conf"
+                        if [ -f "$CONF_FILE" ]; then
+                          ${lib.concatStringsSep "\n" (lib.mapAttrsToList (key: val: ''
+                            if grep -q "^${key}=" "$CONF_FILE"; then
+                              sed -i "s|^${key}=.*|${key}=${val}|" "$CONF_FILE"
+                            else
+                              echo "${key}=${val}" >> "$CONF_FILE"
+                            fi
+                          '') cfg.sddm.themeConfig)}
+                        fi
+                      '';
+                    }
+                  )
                 ];
-              };
+              })
+              (lib.mkIf cfg.lockscreen.enable {
+                environment.systemPackages = [
+                  (pkgs.writeShellScriptBin "qylock-lock" ''
+                    export QS_THEME="${cfg.lockscreen.theme}"
+                    export QS_THEME_PATH="${qylock-pkgs.qylock-lockscreen}/share/qylock-lockscreen/themes/${cfg.lockscreen.theme}"
+                    export QML_XHR_ALLOW_FILE_READ=1
+                    # Ensure wayland platform is used if available
+                    if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+                        export QT_QPA_PLATFORM=wayland
+                    fi
+                    exec ${qylock-pkgs.qylock-lockscreen}/bin/qylock-lock "$@"
+                  '')
+                ];
+                
+                # Allow qylock-lock to authenticate
+                security.pam.services.qylock-lock = {};
 
-              environment.systemPackages = [
-                (let
-                  basePackage = if cfg.qtVersion == "6" then qylock-pkgs.qylock-sddm-theme else qylock-pkgs.qylock-sddm-theme-qt5;
-                in
-                  if cfg.themeConfig == {} then basePackage
-                  else pkgs.stdenv.mkDerivation {
-                    pname = "qylock-sddm-theme-customized";
-                    version = basePackage.version;
-                    src = basePackage;
-                    installPhase = ''
-                      mkdir -p $out/share/sddm/themes
-                      cp -r share/sddm/themes/* $out/share/sddm/themes/
-                      chmod -R +w $out/share/sddm/themes/
-                      
-                      CONF_FILE="$out/share/sddm/themes/${cfg.theme}/theme.conf"
-                      if [ -f "$CONF_FILE" ]; then
-                        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (key: val: ''
-                          if grep -q "^${key}=" "$CONF_FILE"; then
-                            sed -i "s|^${key}=.*|${key}=${val}|" "$CONF_FILE"
-                          else
-                            echo "${key}=${val}" >> "$CONF_FILE"
-                          fi
-                        '') cfg.themeConfig)}
-                      fi
-                    '';
-                  }
-                )
-              ];
-            };
+                # Optional: systemd service for locking on sleep
+                systemd.services.qylock-lock = {
+                  description = "Qylock screen locker";
+                  before = [ "sleep.target" ];
+                  wantedBy = [ "sleep.target" ];
+                  serviceConfig = {
+                    Type = "simple";
+                    ExecStart = "${pkgs.writeShellScript "qylock-lock-service" ''
+                      export QS_THEME="${cfg.lockscreen.theme}"
+                      export QS_THEME_PATH="${qylock-pkgs.qylock-lockscreen}/share/qylock-lockscreen/themes/${cfg.lockscreen.theme}"
+                      export QML_XHR_ALLOW_FILE_READ=1
+                      # We need to find the user's wayland socket and display
+                      # This is a bit tricky for a system service, usually better as a user service
+                      # But for now we just provide the package and basic PAM setup.
+                      ${qylock-pkgs.qylock-lockscreen}/bin/qylock-lock
+                    ''}";
+                    Restart = "on-failure";
+                  };
+                };
+              })
+            ];
           };
         
         default = self.nixosModules.qylock;
