@@ -109,7 +109,7 @@ in
 
     src = ./.;
 
-    nativeBuildInputs = [ pkgs.makeWrapper ];
+    nativeBuildInputs = [ pkgs.qt6.wrapQtAppsHook ];
     
     buildInputs = [
       pkgs.quickshell
@@ -130,11 +130,18 @@ in
       ${installThemeFonts "$out/share/qylock-lockscreen/themes"}
 
       mkdir -p $out/bin
-      makeWrapper ${pkgs.quickshell}/bin/quickshell $out/bin/qylock-lock \
-        --add-flags "-p $out/share/qylock-lockscreen/lock_shell.qml" \
-        --set QML2_IMPORT_PATH "$out/share/qylock-lockscreen/imports" \
-        --set QML_XHR_ALLOW_FILE_READ "1" \
-        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.procps pkgs.util-linux pkgs.systemd ]}
+      # Create a shim that calls quickshell with the right arguments
+      cat > $out/bin/qylock-lock <<EOF
+#!/bin/sh
+exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/qylock-lockscreen/lock_shell.qml" "\$@"
+EOF
+      chmod +x $out/bin/qylock-lock
     '';
+
+    qtWrapperArgs = [
+      "--set QML2_IMPORT_PATH \"$out/share/qylock-lockscreen/imports\""
+      "--set QML_XHR_ALLOW_FILE_READ \"1\""
+      "--prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.procps pkgs.util-linux pkgs.systemd ]}"
+    ];
   };
 }
