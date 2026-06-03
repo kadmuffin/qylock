@@ -91,8 +91,19 @@ Item {
         }
         Component.onCompleted: {
             // Initial session placeholder
-            append({ name: "Session", file: "" });
+            append({ name: "Session", sName: "Session", file: "" });
         }
+    }
+
+    // Dummy objects for theme compatibility
+    property var keyboard: QtObject {
+        property bool capsLock: false
+        property bool numLock: false
+    }
+
+    property var user: QtObject {
+        property string name: internalUserModel.get(0).name
+        property string realName: internalUserModel.get(0).realName
     }
 
     // Enumerate system sessions
@@ -141,7 +152,7 @@ Item {
 
             var parts = line.split("|||");
             if (parts.length === 2 && parts[0] !== "" && parts[1] !== "") {
-                internalSessionModel.append({ name: parts[0], file: parts[1] });
+                internalSessionModel.append({ name: parts[0], sName: parts[0], file: parts[1] });
                 
                 // Match current desktop
                 var fileName = parts[1].toLowerCase();
@@ -176,7 +187,7 @@ Item {
 
     PamContext {
         id: pam
-        service: shim.pamService
+        config: shim.pamService
         property string pendingPassword: ""
 
         onResponseRequiredChanged: {

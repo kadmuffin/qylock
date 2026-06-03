@@ -8,7 +8,7 @@
 
 <div align="center">
 <pre>
-<a href="#sddm-setup">ꜱᴅᴅᴍ</a>  •  <a href="#quickshell-setup">ǫᴜɪᴄᴋsʜᴇʟʟ</a>  •  <a href="#faq">ꜰᴀǫ</a>  •  <a href="#gallery">ɢᴀʟʟᴇʀʏ</a>  •  <a href="#acknowledgements">ᴀᴄᴋɴᴏᴡʟᴇᴅɢᴇᴍᴇɴᴛꜱ</a>  •  <a href="#credits">ᴄʀᴇᴅɪᴛꜱ</a>
+<a href="#sddm-setup">ꜱᴅᴅᴍ</a>  •  <a href="#quickshell-setup">ǫᴜɪᴄᴋsʜᴇʟʟ</a>  •  <a href="#available-themes">ᴛʜᴇᴍᴇꜱ</a>  •  <a href="#faq">ꜰᴀǫ</a>  •  <a href="#gallery">ɢᴀʟʟᴇʀʏ</a>  •  <a href="#acknowledgements">ᴀᴄᴋɴᴏᴡʟᴇᴅɢᴇᴍᴇɴᴛꜱ</a>  •  <a href="#credits">ᴄʀᴇᴅɪᴛꜱ</a>
 </pre>
 </div>
 
@@ -174,6 +174,34 @@ binds {
 ```
 
 The `qylock-lock` command is automatically added to your PATH when `services.qylock.lockscreen.enable = true`. It uses `ext-session-lock-v1` to securely lock your session.
+
+<p align="center">━━━━━━━ ◈ ━━━━━━━</p>
+
+<a id="available-themes"></a>
+<br>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/-AVAILABLE%20THEMES-9ece6a?style=for-the-badge&labelColor=1a1b26&logo=windowsterminal&logoColor=white" height="60" />
+</p>
+
+<br>
+
+You can use any of these theme names in your NixOS configuration or when running the installation scripts:
+
+| | | |
+|:---:|:---:|:---:|
+| `clockwork` | `dog-samurai` | `enfield` |
+| `field` | `forest` | `Genshin` |
+| `girl-coffee` | `girl-pillow` | `last-of-us` |
+| `man-bicycle` | `minecraft` | `nier-automata` |
+| `ninja_gaiden` | `osu` | `osumania` |
+| `pixel-coffee` | `pixel-cyberpunk` | `pixel-dusk-city` |
+| `pixel-emerald` | `pixel-hollowknight` | `pixel-munchlax` |
+| `pixel-night-city` | `pixel-rainyroom` | `pixel-sakura` |
+| `pixel-skyscrapers` | `pixel-waterfall` | `R1999_1` |
+| `R1999_2` | `star-rail` | `sword` |
+| `terraria` | `windows_7` | `winter` |
+| `women-umbrella` | `wuwa` | |
 
 <p align="center">━━━━━━━ ◈ ━━━━━━━</p>
 

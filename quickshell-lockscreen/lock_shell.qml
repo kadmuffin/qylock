@@ -9,7 +9,7 @@ ShellRoot {
     id: shellRoot
 
     property string activeTheme: Quickshell.env("QS_THEME") || "nier-automata"
-    property string themePath: Quickshell.env("QS_THEME_PATH") || (Quickshell.shellDir + "/themes_link/" + activeTheme)
+    property string themePath: Quickshell.env("QS_THEME_PATH") || (Quickshell.shellDir + "/themes/" + activeTheme)
 
     readonly property var sddm: sddmShim.sddm
     readonly property var config: sddmShim.config
@@ -75,14 +75,14 @@ ShellRoot {
 
     Loader {
         id: waylandLoader
-        active: shellRoot.isWayland
+        active: shellRoot.isWayland && !shellRoot.isTesting
         sourceComponent: Component {
             WlSessionLock {
                 id: lock
                 locked: shellRoot.sessionLocked
                 surface: Component {
                     WlSessionLockSurface {
-                        color: "black"
+                        color: "darkblue" // Debug fallback color
                         
                         // Absorb unhandled gestures
                         PinchHandler { target: null }
@@ -107,7 +107,7 @@ ShellRoot {
 
     Loader {
         id: x11Loader
-        active: !shellRoot.isWayland
+        active: !shellRoot.isWayland || shellRoot.isTesting
         sourceComponent: Component {
             Variants {
                 model: Quickshell.screens

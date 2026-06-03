@@ -134,9 +134,26 @@ in
       # Create a shim that calls quickshell with the right arguments
       cat > $out/bin/qylock-lock <<EOF
 #!/bin/sh
-# Add all Qt6 dependencies to QML2_IMPORT_PATH
-export QML2_IMPORT_PATH="${pkgs.qt6.qtmultimedia}/lib/qt-6/qml:${pkgs.qt6.qt5compat}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml:\$QML2_IMPORT_PATH"
-exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/qylock-lockscreen/lock_shell.qml" "\$@"
+# Add all Qt6 dependencies and local imports to QML2_IMPORT_PATH
+export QML2_IMPORT_PATH="${pkgs.qt6.qtmultimedia}/lib/qt-6/qml:${pkgs.qt6.qt5compat}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml:$out/share/qylock-lockscreen/imports:\$QML2_IMPORT_PATH"
+
+# Set default theme if not provided
+[ -z "\$QS_THEME" ] && export QS_THEME="nier-automata"
+
+# Set default theme path to the Nix store path if not provided
+if [ -z "\$QS_THEME_PATH" ]; then
+    export QS_THEME_PATH="$out/share/qylock-lockscreen/themes/\$QS_THEME"
+fi
+
+export QML_XHR_ALLOW_FILE_READ=1
+
+# If QS_TESTING is set, run in a window and don't lock
+if [ "\$QS_TESTING" = "1" ]; then
+    echo "Running in TESTING mode (windowed, no lock)"
+    exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/qylock-lockscreen/lock_shell.qml" "\$@"
+else
+    exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/qylock-lockscreen/lock_shell.qml" "\$@"
+fi
 EOF
       chmod +x $out/bin/qylock-lock
     '';
