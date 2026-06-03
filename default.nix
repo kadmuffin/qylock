@@ -117,6 +117,7 @@ in
       pkgs.qt6.qtmultimedia
       pkgs.qt6.qtsvg
       pkgs.qt6.qt5compat
+      pkgs.qt6.qtdeclarative
     ];
 
     installPhase = ''
@@ -133,13 +134,15 @@ in
       # Create a shim that calls quickshell with the right arguments
       cat > $out/bin/qylock-lock <<EOF
 #!/bin/sh
+# Add all Qt6 dependencies to QML2_IMPORT_PATH
+export QML2_IMPORT_PATH="${pkgs.qt6.qtmultimedia}/lib/qt-6/qml:${pkgs.qt6.qt5compat}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml:\$QML2_IMPORT_PATH"
 exec ${pkgs.quickshell}/bin/quickshell -p "$out/share/qylock-lockscreen/lock_shell.qml" "\$@"
 EOF
       chmod +x $out/bin/qylock-lock
     '';
 
     qtWrapperArgs = [
-      "--set QML2_IMPORT_PATH \"$out/share/qylock-lockscreen/imports\""
+      "--prefix QML2_IMPORT_PATH : \"$out/share/qylock-lockscreen/imports\""
       "--set QML_XHR_ALLOW_FILE_READ \"1\""
       "--prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.procps pkgs.util-linux pkgs.systemd ]}"
     ];
