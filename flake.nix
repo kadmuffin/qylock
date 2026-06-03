@@ -48,35 +48,6 @@
               services.displayManager.sddm = {
                 enable = true;
                 theme = cfg.theme;
-                themePackages = [
-                  (let
-                    basePackage = if cfg.qtVersion == "6" then qylock-pkgs.qylock-sddm-theme else qylock-pkgs.qylock-sddm-theme-qt5;
-                  in
-                    if cfg.themeConfig == {} then basePackage
-                    else pkgs.stdenv.mkDerivation {
-                      pname = "qylock-sddm-theme-customized";
-                      version = basePackage.version;
-                      src = basePackage;
-                      installPhase = ''
-                        mkdir -p $out/share/sddm/themes
-                        cp -r share/sddm/themes/* $out/share/sddm/themes/
-                        chmod -R +w $out/share/sddm/themes/
-                        
-                        CONF_FILE="$out/share/sddm/themes/${cfg.theme}/theme.conf"
-                        if [ -f "$CONF_FILE" ]; then
-                          ${lib.concatStringsSep "\n" (lib.mapAttrsToList (key: val: ''
-                            if grep -q "^${key}=" "$CONF_FILE"; then
-                              sed -i "s|^${key}=.*|${key}=${val}|" "$CONF_FILE"
-                            else
-                              echo "${key}=${val}" >> "$CONF_FILE"
-                            fi
-                          '') cfg.themeConfig)}
-                        fi
-                      '';
-                    }
-                  )
-                ];
-
                 extraPackages = if cfg.qtVersion == "6" then [
                   pkgs.qt6.qt5compat
                   pkgs.qt6.qtsvg
@@ -87,6 +58,35 @@
                   pkgs.libsForQt5.qtmultimedia
                 ];
               };
+
+              environment.systemPackages = [
+                (let
+                  basePackage = if cfg.qtVersion == "6" then qylock-pkgs.qylock-sddm-theme else qylock-pkgs.qylock-sddm-theme-qt5;
+                in
+                  if cfg.themeConfig == {} then basePackage
+                  else pkgs.stdenv.mkDerivation {
+                    pname = "qylock-sddm-theme-customized";
+                    version = basePackage.version;
+                    src = basePackage;
+                    installPhase = ''
+                      mkdir -p $out/share/sddm/themes
+                      cp -r share/sddm/themes/* $out/share/sddm/themes/
+                      chmod -R +w $out/share/sddm/themes/
+                      
+                      CONF_FILE="$out/share/sddm/themes/${cfg.theme}/theme.conf"
+                      if [ -f "$CONF_FILE" ]; then
+                        ${lib.concatStringsSep "\n" (lib.mapAttrsToList (key: val: ''
+                          if grep -q "^${key}=" "$CONF_FILE"; then
+                            sed -i "s|^${key}=.*|${key}=${val}|" "$CONF_FILE"
+                          else
+                            echo "${key}=${val}" >> "$CONF_FILE"
+                          fi
+                        '') cfg.themeConfig)}
+                      fi
+                    '';
+                  }
+                )
+              ];
             };
           };
         
