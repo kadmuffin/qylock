@@ -12,7 +12,7 @@
     in {
       packages = forEachSystem (system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
           qylock-packages = import ./default.nix { inherit pkgs; };
         in qylock-packages // {
           default = qylock-packages.qylock-sddm-theme;
